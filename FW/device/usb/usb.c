@@ -410,7 +410,7 @@ void usb_send_data(uint8_t * buffer, uint8_t lenght)
 		while (usb.event == USB_EVENT_READY_DATA_IN)
 		{
 			if ((usb.state != USB_STATE_IN)&&(usb.state != USB_STATE_SETUP))
-				return;
+				break;
 		}
 	}
 }

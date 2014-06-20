@@ -499,8 +499,8 @@
 1018  009d 2706          	jreq	L303
 1020  009f c60000        	ld	a,_usb
 1021  00a2 4a            	dec	a
-1022  00a3 260e          	jrne	L64
-1023                     ; 413 				return;
+1022  00a3 2607          	jrne	L542
+1023                     ; 413 				break;
 1025  00a5               L303:
 1026                     ; 410 		while (usb.event == USB_EVENT_READY_DATA_IN)
 1028  00a5 c60001        	ld	a,_usb+1
@@ -511,110 +511,109 @@
 1034  00ac 7b07          	ld	a,(OFST+5,sp)
 1035  00ae 2703cc0009    	jrne	L142
 1036                     ; 416 }
-1037  00b3               L64:
-1040  00b3 5b04          	addw	sp,#4
-1041  00b5 81            	ret	
-1044                     	switch	.data
-1045  0001               _counter_a:
-1046  0001 00            	dc.b	0
-1047  0002               _counter_b:
-1048  0002 00            	dc.b	0
-1049  0003               _counter_all:
-1050  0003 00            	dc.b	0
-1051  0004               _tx_counter:
-1052  0004 00            	dc.b	0
-1077                     ; 424 void usb_process(void)
-1077                     ; 425 {
-1078                     .text:	section	.text,new
-1079  0000               _usb_process:
-1083                     ; 426 	if (usb.event == USB_EVENT_RECEIVE_SETUP_DATA)
-1085  0000 c60001        	ld	a,_usb+1
-1086  0003 4a            	dec	a
-1087  0004 2650          	jrne	L133
-1088                     ; 428 		switch (usb.rx_buffer[2])
-1090  0006 c60008        	ld	a,_usb+8
-1092                     ; 475 				break;
-1093  0009 2727          	jreq	L513
-1094  000b a080          	sub	a,#128
-1095  000d 2647          	jrne	L133
-1096                     ; 432 				switch (usb.rx_buffer[3])
-1098  000f c60009        	ld	a,_usb+9
-1099  0012 a106          	cp	a,#6
-1100  0014 2640          	jrne	L133
-1103                     ; 436 						if (usb.rx_buffer[5] == 1)
-1105  0016 c6000b        	ld	a,_usb+11
-1106  0019 a101          	cp	a,#1
-1107  001b 2607          	jrne	L343
-1108                     ; 438 							usb_send_data(&usb_device_descriptor[0], ARRAY_LENGHT(usb_device_descriptor));
-1110  001d 4b12          	push	#18
-1111  001f ae0000        	ldw	x,#_usb_device_descriptor
-1114  0022 2009          	jp	LC002
-1115  0024               L343:
-1116                     ; 440 						else if (usb.rx_buffer[5] == 2)
-1118  0024 a102          	cp	a,#2
-1119  0026 262e          	jrne	L133
-1120                     ; 441 							usb_send_data(&usb_configuration_descriptor[0], ARRAY_LENGHT(usb_configuration_descriptor));
-1122  0028 4b12          	push	#18
-1123  002a ae0012        	ldw	x,#_usb_configuration_descriptor
-1125  002d               LC002:
-1126  002d cd0000        	call	_usb_send_data
-1127  0030 84            	pop	a
-1129  0031 81            	ret	
-1130  0032               L513:
-1131                     ; 457 				switch (usb.rx_buffer[3])
-1133  0032 c60009        	ld	a,_usb+9
-1134  0035 a105          	cp	a,#5
-1135  0037 261d          	jrne	L133
-1138                     ; 461 						usb.setup_address = usb.rx_buffer[4];
-1140  0039 55000a0004    	mov	_usb+4,_usb+10
-1141                     ; 463 						usb.tx_lenght = 4;
-1143  003e 35040027      	mov	_usb+39,#4
-1144                     ; 464 						usb.tx_buffer[0] = 0x80;
-1146  0042 35800017      	mov	_usb+23,#128
-1147                     ; 465 						usb.tx_buffer[1] = USB_PID_DATA1;
-1149  0046 354b0018      	mov	_usb+24,#75
-1150                     ; 466 						usb.tx_buffer[2] = 0;
-1152  004a 725f0019      	clr	_usb+25
-1153                     ; 467 						usb.tx_buffer[3] = 0;
-1155  004e 725f001a      	clr	_usb+26
-1156                     ; 469 						usb.event = USB_EVENT_READY_DATA_IN;
-1158  0052 35020001      	mov	_usb+1,#2
-1159                     ; 471 						break;
-1161  0056               L133:
-1162                     ; 479 }
-1165  0056 81            	ret	
-1400                     	xdef	_tx_counter
-1401                     	xdef	_counter_all
-1402                     	xdef	_counter_b
-1403                     	xdef	_counter_a
-1404                     	xdef	_usb_send_data
-1405                     	xdef	_usb_calc_crc16
-1406                     	xdef	_usb_rx_ok
-1407                     	xdef	_count
-1408                     	xdef	_usb_send_ack
-1409                     	xdef	_usb_send_nack
-1410                     	switch	.bss
-1411  0000               _usb:
-1412  0000 000000000000  	ds.b	41
-1413                     	xdef	_usb
-1414                     	xdef	_usb_endpoint_descriptor
-1415                     	xdef	_usb_interface_descriptor
-1416                     	xdef	_usb_configuration_descriptor
-1417                     	xdef	_usb_device_descriptor
-1418  0029               _usb_rx_count:
-1419  0029 00            	ds.b	1
-1420                     	xdef	_usb_rx_count
-1421  002a               _usb_tx_buffer_pointer:
-1422  002a 0000          	ds.b	2
-1423                     	xdef	_usb_tx_buffer_pointer
-1424  002c               _usb_rx_buffer:
-1425  002c 000000000000  	ds.b	16
-1426                     	xdef	_usb_rx_buffer
-1427                     	xref	_usb_tx
-1428                     	xdef	_usb_process
-1429                     	xdef	_usb_init
-1430  003c               _usb_tx_count:
-1431  003c 00            	ds.b	1
-1432                     	xdef	_usb_tx_count
-1433                     	xref.b	c_x
-1453                     	end
+1039  00b3 5b04          	addw	sp,#4
+1040  00b5 81            	ret	
+1043                     	switch	.data
+1044  0001               _counter_a:
+1045  0001 00            	dc.b	0
+1046  0002               _counter_b:
+1047  0002 00            	dc.b	0
+1048  0003               _counter_all:
+1049  0003 00            	dc.b	0
+1050  0004               _tx_counter:
+1051  0004 00            	dc.b	0
+1076                     ; 424 void usb_process(void)
+1076                     ; 425 {
+1077                     .text:	section	.text,new
+1078  0000               _usb_process:
+1082                     ; 426 	if (usb.event == USB_EVENT_RECEIVE_SETUP_DATA)
+1084  0000 c60001        	ld	a,_usb+1
+1085  0003 4a            	dec	a
+1086  0004 2650          	jrne	L133
+1087                     ; 428 		switch (usb.rx_buffer[2])
+1089  0006 c60008        	ld	a,_usb+8
+1091                     ; 475 				break;
+1092  0009 2727          	jreq	L513
+1093  000b a080          	sub	a,#128
+1094  000d 2647          	jrne	L133
+1095                     ; 432 				switch (usb.rx_buffer[3])
+1097  000f c60009        	ld	a,_usb+9
+1098  0012 a106          	cp	a,#6
+1099  0014 2640          	jrne	L133
+1102                     ; 436 						if (usb.rx_buffer[5] == 1)
+1104  0016 c6000b        	ld	a,_usb+11
+1105  0019 a101          	cp	a,#1
+1106  001b 2607          	jrne	L343
+1107                     ; 438 							usb_send_data(&usb_device_descriptor[0], ARRAY_LENGHT(usb_device_descriptor));
+1109  001d 4b12          	push	#18
+1110  001f ae0000        	ldw	x,#_usb_device_descriptor
+1113  0022 2009          	jp	LC002
+1114  0024               L343:
+1115                     ; 440 						else if (usb.rx_buffer[5] == 2)
+1117  0024 a102          	cp	a,#2
+1118  0026 262e          	jrne	L133
+1119                     ; 441 							usb_send_data(&usb_configuration_descriptor[0], ARRAY_LENGHT(usb_configuration_descriptor));
+1121  0028 4b12          	push	#18
+1122  002a ae0012        	ldw	x,#_usb_configuration_descriptor
+1124  002d               LC002:
+1125  002d cd0000        	call	_usb_send_data
+1126  0030 84            	pop	a
+1128  0031 81            	ret	
+1129  0032               L513:
+1130                     ; 457 				switch (usb.rx_buffer[3])
+1132  0032 c60009        	ld	a,_usb+9
+1133  0035 a105          	cp	a,#5
+1134  0037 261d          	jrne	L133
+1137                     ; 461 						usb.setup_address = usb.rx_buffer[4];
+1139  0039 55000a0004    	mov	_usb+4,_usb+10
+1140                     ; 463 						usb.tx_lenght = 4;
+1142  003e 35040027      	mov	_usb+39,#4
+1143                     ; 464 						usb.tx_buffer[0] = 0x80;
+1145  0042 35800017      	mov	_usb+23,#128
+1146                     ; 465 						usb.tx_buffer[1] = USB_PID_DATA1;
+1148  0046 354b0018      	mov	_usb+24,#75
+1149                     ; 466 						usb.tx_buffer[2] = 0;
+1151  004a 725f0019      	clr	_usb+25
+1152                     ; 467 						usb.tx_buffer[3] = 0;
+1154  004e 725f001a      	clr	_usb+26
+1155                     ; 469 						usb.event = USB_EVENT_READY_DATA_IN;
+1157  0052 35020001      	mov	_usb+1,#2
+1158                     ; 471 						break;
+1160  0056               L133:
+1161                     ; 479 }
+1164  0056 81            	ret	
+1399                     	xdef	_tx_counter
+1400                     	xdef	_counter_all
+1401                     	xdef	_counter_b
+1402                     	xdef	_counter_a
+1403                     	xdef	_usb_send_data
+1404                     	xdef	_usb_calc_crc16
+1405                     	xdef	_usb_rx_ok
+1406                     	xdef	_count
+1407                     	xdef	_usb_send_ack
+1408                     	xdef	_usb_send_nack
+1409                     	switch	.bss
+1410  0000               _usb:
+1411  0000 000000000000  	ds.b	41
+1412                     	xdef	_usb
+1413                     	xdef	_usb_endpoint_descriptor
+1414                     	xdef	_usb_interface_descriptor
+1415                     	xdef	_usb_configuration_descriptor
+1416                     	xdef	_usb_device_descriptor
+1417  0029               _usb_rx_count:
+1418  0029 00            	ds.b	1
+1419                     	xdef	_usb_rx_count
+1420  002a               _usb_tx_buffer_pointer:
+1421  002a 0000          	ds.b	2
+1422                     	xdef	_usb_tx_buffer_pointer
+1423  002c               _usb_rx_buffer:
+1424  002c 000000000000  	ds.b	16
+1425                     	xdef	_usb_rx_buffer
+1426                     	xref	_usb_tx
+1427                     	xdef	_usb_process
+1428                     	xdef	_usb_init
+1429  003c               _usb_tx_count:
+1430  003c 00            	ds.b	1
+1431                     	xdef	_usb_tx_count
+1432                     	xref.b	c_x
+1452                     	end
