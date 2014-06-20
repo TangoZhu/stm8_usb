@@ -49,6 +49,15 @@ const uint8_t usb_configuration_descriptor[] = { 9, // размер дескри
 		0, // индекс строки описания конфигурации
 		0x80, // аттрибуты (D7 всегда 1, D6 - питание не от USB, D5 - пробуждение)
 		50, // максимальный ток потребления в мА деленный на 2
+		9,
+		4,
+		0,
+		0,
+		0,
+		3,	//hid 设备
+		0,
+		1,	//键盘
+		0,
 		};
 
 const uint8_t usb_interface_descriptor[] = { 9, // размер дескриптора (байт)
@@ -144,6 +153,7 @@ void usb_init(void)
 	usb.state = USB_STATE_IDLE;
 	usb.event = USB_EVENT_NO;
 	usb.device_address = 0;
+	usb.setup_address  = 0;
 	usb.tx_is_all = TRUE;
 }
 
@@ -151,7 +161,7 @@ void usb_send_nack(void)
 {
 	uint8_t data[2];
 
-	GPIOC->ODR = 0x80;
+	GPIOC->ODR = 0x40;
 	GPIOC->CR1 = 0xFF;
 	GPIOC->CR2 = 0xFF;
 	GPIOC->DDR = 0xFF;
@@ -180,19 +190,20 @@ void usb_send_ack(void)
 {
 	uint8_t data[2];
 
-	GPIOC->ODR = 0x80;
+	GPIOC->ODR = 0x40;
+	GPIOC->DDR = 0xFF;
 	GPIOC->CR1 = 0xFF;
 	GPIOC->CR2 = 0xFF;
-	GPIOC->DDR = 0xFF;
-
+	
 	data[0] = 0x80;
 	data[1] = USB_PID_ACK;
 
 	usb_tx_count = 2;
 	usb_tx_buffer_pointer = &data[0];
 
+	
 	usb_tx();
-
+	
 	nop();
 	nop();
 	nop();
@@ -202,6 +213,7 @@ void usb_send_ack(void)
 
 	GPIOC->CR2 = 0x00;
 	GPIOC->CR1 = 0x00;
+	GPIOC->DDR = 0x7F;
 	GPIOC->DDR = 0x3F;
 }
 
@@ -209,7 +221,7 @@ uint8_t count = 0;
 
 @inline void usb_send_answer(void)
 {
-	GPIOC->ODR = 0x80;
+	GPIOC->ODR = 0x40;
 	GPIOC->CR1 = 0xFF;
 	GPIOC->CR2 = 0xFF;
 	GPIOC->DDR = 0xFF;
@@ -246,7 +258,6 @@ void usb_rx_ok(void)
 		case (USB_PID_SETUP):
 		{
 			usb.state = USB_STATE_SETUP;
-
 			break;
 		}
 		case (USB_PID_OUT):
@@ -257,27 +268,30 @@ void usb_rx_ok(void)
 		}
 		case (USB_PID_IN):
 		{
-			if (usb.event == USB_EVENT_READY_DATA_IN)
+
+		
+			if ((usb.event == USB_EVENT_READY_DATA_IN)&&(usb_rx_buffer[2]==usb.device_address))
 			{
 				usb_send_answer();
-
 				usb.event = USB_EVENT_WAIT_DATA_IN;
+				usb.state = USB_STATE_IN;
 			}
-			else
-			{
-				usb_send_nack();
-			}
-
-			usb.state = USB_STATE_IN;
-
+			//else
+			//{
+			//	usb_send_nack(); NACK 会影响HUB上的其它设备 
+			//}
+			
+			if(usb.setup_address!=0)
+				usb.device_address=usb.setup_address;
+				
 			break;
 		}
 		case (USB_PID_DATA0):
 		{
 			if (usb.state == USB_STATE_SETUP)
 			{
-				usb_send_ack();
 
+				usb_send_ack();
 				usb_copy_rx_buffer();
 
 				usb.event = USB_EVENT_RECEIVE_SETUP_DATA;
@@ -395,7 +409,7 @@ void usb_send_data(uint8_t * buffer, uint8_t lenght)
 
 		while (usb.event == USB_EVENT_READY_DATA_IN)
 		{
-			if (usb.state != USB_STATE_IN)
+			if ((usb.state != USB_STATE_IN)&&(usb.state != USB_STATE_SETUP))
 				return;
 		}
 	}
@@ -420,7 +434,9 @@ void usb_process(void)
 					case (USB_REQUEST_GET_DESCRIPTOR):
 					{
 						if (usb.rx_buffer[5] == 1)
+						{
 							usb_send_data(&usb_device_descriptor[0], ARRAY_LENGHT(usb_device_descriptor));
+						}
 						else if (usb.rx_buffer[5] == 2)
 							usb_send_data(&usb_configuration_descriptor[0], ARRAY_LENGHT(usb_configuration_descriptor));
 
@@ -442,7 +458,7 @@ void usb_process(void)
 				{
 					case (USB_REQUEST_SET_ADDRESS):
 					{
-						usb.device_address = usb.rx_buffer[4];
+						usb.setup_address = usb.rx_buffer[4];
 
 						usb.tx_lenght = 4;
 						usb.tx_buffer[0] = 0x80;

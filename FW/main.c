@@ -9,7 +9,12 @@
 @inline static void gpio_init(void)
 {
 	// перевод всех линий на вход с подтяжкой к плюсу
-	GPIOA->CR1 = 0xFF;
+	//Set PA3 out for debug
+	GPIOA->CR1 = 0x08;
+	GPIOA->CR2 = 0x08;
+	GPIOA->DDR = 0x08;
+	GPIOA->ODR = 0x08;
+	
 	GPIOB->CR1 = 0xFF;
 	GPIOC->CR1 = 0xFF;
 	GPIOD->CR1 = 0xFF;
@@ -57,6 +62,8 @@ void main(void)
 
 	timers_init();
 
+	usb_init();
+	
 	enableInterrupts();
 
 	while(1)
