@@ -1,0 +1,24 @@
+#	CONFIGURATION FILE FOR STM8 COMPILER
+#	Copyright (c) 2006 by COSMIC Software
+#
+-pu				# unsigned char
+-ppb				# pack local bit variables
+-i "C:\Program Files\COSMIC\CXSTM8_32K\HSTM8"
+#
+-m debug:x			# debug: produce debug info
+-m nobss:,bss			# nobss: do not use bss
+-m nocst:,ct			# nocst: constants in code
+-m nocross:,nc			# nocross: functions do not cross boundaries
+-m rev:rb			# rev: reverse bit field order
+-m strict:ck			# strict: enhance type checking
+-m split:,sf			# split: functions in different sections
+-m proto:p			# proto: enable prototype checking
+-m compact:,,f7,,fast		# compact: factorize code
+-m fast:,i,,,compact		# fast: inline long transferts
+-m warn:w1			# warn: enable warnings
+#
+-m mods:hmods.h,fl,,,modsl	# stack model
+-m modsl:hmodsl.h,fl,,,mods	# stack long model
+#
+-m mods0:hmods0.h,,,,modsl0	# stack model 64K
+-m modsl0:hmodsl0.h,,,,mods0	# stack long model 64K

@@ -1,0 +1,18 @@
+cxstm8
+O,+fast,Inline Long Machine Library Calls,116
+M,+warn,Enable warnings,115
+O,+compact,Enable code factorization,114
+O,+split,Split functions in different sections (allows unused functions removal by linker), 113
+G,+mods0,Use Short Stack Model 64K,112,+mods,+modsl,+modsl0
+G,+modsl0,Use Long Stack Model 64K,111,+mods0,+mods,+modsl
+G,+mods,Use Short Stack Model,110,+mods0,+modsl,+modsl0
+G,+modsl,Use Long Stack Model,109,+mods,+mods0,+modsl0
+M,+nocross, Functions do not cross boundaries,108
+M,+rev,Number bits from MSB to LSB in bitfields,107
+M,+debug,Generate Debug Information,106
+G,+nobss,Do not use the .bss section,105
+G,+nocst,Use .text section for literals and constants,104
+M,+strict,Enforce Type Checking,103
+M,-proto,Force prototyping,102
+L,-l,Generate Listings,101
+G,-v,Verbose Mode, 100

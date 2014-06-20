@@ -1,0 +1,9 @@
+cobj
+-d,output data flows,100
+-h,output header,101
+-i,display info section,102
+-n,output sections,103
+-r,output reloc flows,104
+-s,output symbol table,105
+-v,display file addresses,106
+-x,output debug symbols,107
