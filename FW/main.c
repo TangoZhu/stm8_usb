@@ -52,8 +52,26 @@
 	TIM1_ITConfig(TIM1_IT_CC2, ENABLE);
 }
 
+extern uint8_t usb_ready;
+uint8_t data_buffer[4];
+
+void delay(uint8_t n)
+{
+	unsigned int i;
+	while(n>0)
+	{
+		for(i=0;i<2000;i++)
+			;
+		n--;
+	}
+}
+
 void main(void)
 {
+	char x=10;
+	char y=10;
+	
+	
 	disableInterrupts();
 
 	gpio_init();
@@ -66,8 +84,22 @@ void main(void)
 	
 	enableInterrupts();
 
+	while(usb_ready == 0)
+		usb_process();
 	while(1)
 	{
-		usb_process();
+		delay(100);
+		
+		if(get_random_byte()>127)
+		{
+			x=-x;
+			y=-y;
+		}
+		
+			data_buffer[0] = 0x00;
+			data_buffer[1] = x;
+			data_buffer[2] = y;
+			data_buffer[3] = 0x00;
+			usb_send_data(&data_buffer[0], 4, 0);
 	}
 }
