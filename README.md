@@ -15,3 +15,9 @@ http://www.amobbs.com/thread-5585000-1-1.html
 
 为 STM8 USB 再添一把火 —— 适合热转印的开发板
 http://www.amobbs.com/thread-5585002-1-1.html
+
+为 STM8 USB 再添一把火 —— 固件讨论帖
+http://www.amobbs.com/thread-5585137-1-1.html
+
+TODO:
+修改USB端口操作方式，释放PORTC的其他端口作为GPIO
