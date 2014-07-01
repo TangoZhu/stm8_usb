@@ -13,26 +13,26 @@
 	GPIOA->CR1 = 0x08;
 	GPIOA->CR2 = 0x08;
 	GPIOA->DDR = 0x08;
-	GPIOA->ODR = 0x08;
+	GPIOA->ODR = 0x00;
 	
-	GPIOB->CR1 = 0xFF;
-	GPIOC->CR1 = 0xFF;
-	GPIOD->CR1 = 0xFF;
-	GPIOE->CR1 = 0xFF;
-	GPIOF->CR1 = 0xFF;
+	//GPIOB->CR1 = 0xFF;
+	//GPIOC->CR1 = 0xFF;
+	//GPIOD->CR1 = 0xFF;
+	//GPIOE->CR1 = 0xFF;
+	//GPIOF->CR1 = 0xFF;
 
 	// Входные линии USB
-	GPIOC->CR1 = 0;
-	GPIOC->CR2 = 0;
-	GPIOC->DDR = 0x3F;
-	GPIOC->ODR = 0;
+	//GPIOC->CR1 = 0;
+	//GPIOC->CR2 = 0;
+	//GPIOC->DDR = 0x3F;
+	//GPIOC->ODR = 0;
 }
 
 @inline static void clock_init(void)
 {
 	// после сброса микроконтроллер работает от встроенного HSI-генератора
 	// с делителем по умолчанию 8, меняем его на 1
-	CLK->CKDIVR = 0;
+	//CLK->CKDIVR = 0;
 
 	// переключаемся на внешний кварцевый резонатор
 	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSE, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
@@ -42,9 +42,9 @@
 {
 	CLK->PCKENR1 |= CLK_PCKENR1_TIM1;
 
-	// таймер 1 - "захват" первого импульса USB посылки
+	// 定时器1 - “捕获”的第一个脉冲的USB包裹
 	TIM1_TimeBaseInit(0, TIM1_PSCRELOADMODE_UPDATE, 1000, 0);
-	// захват сигнала по линии USB D-
+	// 信号采集，通过USB D-
 	TIM1_ICInit(TIM1_CHANNEL_2, TIM1_ICPOLARITY_RISING, TIM1_ICSELECTION_DIRECTTI, TIM1_ICPSC_DIV1, 0x02);
 	TIM1_SelectInputTrigger(TIM1_TS_TI2FP2);
 	TIM1_SelectSlaveMode(TIM1_SLAVEMODE_TRIGGER);
@@ -71,21 +71,24 @@ void main(void)
 	char x=10;
 	char y=10;
 	
+	CLK->CKDIVR = 0;	//16M
 	
 	disableInterrupts();
 
 	gpio_init();
 
-	clock_init();
-
 	timers_init();
 
 	usb_init();
 	
+	clock_init();	//12M
+	
 	enableInterrupts();
 
 	while(usb_ready == 0)
+	{
 		usb_process();
+	}
 	while(1)
 	{
 		delay(100);

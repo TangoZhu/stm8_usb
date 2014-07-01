@@ -1,12 +1,12 @@
-	xref	_usb_rx_count, _usb_rx_buffer, _usb_rx_ok
+	xref	_usb_rx_count, _usb_rx_buffer, _usb_rx_ok, _usb_init
 
 	xdef	_usb_rx
 
 L_Bit0_Begin:
-	cpl		($14,y)					; сигнал синхронизации
+	cpl		($14,y)					; 同步信号
 	srl		($01, SP)
 	ld		a,(y)
-	jreq	L_End_Rx				; выход, если input = 0 (конец пакета)
+	jreq	L_End_Rx				; 输出，如果输入=0（数据包结束）
 	xor		a, ($01, SP)
 	ld		($01, SP),a
 	nop
@@ -100,12 +100,12 @@ L_End_Rx:
 
 	call	_usb_rx_ok
 
-	clr		20495
+	clr		20495					; PD->ODR ???
 
-	mov		21077,#251 				; сброс флага прерывания таймера
+	mov		21077,#251 				; 复位定时器中断标志
 
-	bres	21072,#0				; стоп таймер
-	clr		21086					; сброс счетного регистра
+	bres	21072,#0				; 停止定时器
+	clr		21086					; 重置计数器寄存器
 	clr		21087					;
 
 	iret
@@ -115,16 +115,15 @@ L_End_Rx:
 ;
 
 _usb_rx:
-
-	ldw		x, #L_Delay_Begin	; адрес начала таблицы задержек
-	addw	x, 21086			; + смещение (значение таймера)
-	cpw		x, #L_Delay_End		; проверка выхода за границу таблицы (защита!)
+	ldw		x, #L_Delay_Begin	; 表的起始地址的延迟
+	addw	x, 21086			; + 偏移量（定时器）
+	cpw		x, #L_Delay_End		; 对于表格边框检查输出（zaschita!）
 	jruge	L_Error
-	jp		(x)					; переход по таблице задержек
-
+	jp		(x)					; 跳表的延误
+	
 L_Error:
 
-	iret ; аврийный выход
+	iret ; 紧急输出
 
 L_Delay_Begin:
 	nop
@@ -172,9 +171,9 @@ L_Delay_Begin:
 
 L_Delay_End:
 
-	ldw		x, #_usb_rx_buffer		; адрес начала буфера
-	ldw		y, #20491 				; адрес входного сигнала
-	ld		a, #$0E					; максимальное кол-во принимаемых байт (защита!)
+	ldw		x, #_usb_rx_buffer		; 启动该缓冲器的地址
+	ldw		y, #20491 				; 地址输入
+	ld		a, #$0E					; 收到的最大字节数（zaschita!）
 	push	a
 	ld		a, #$80
 	push	a

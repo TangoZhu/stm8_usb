@@ -224,6 +224,9 @@ void usb_init(void)
 	usb.tx_is_all = TRUE;
 	usb_ready = 0;
 	usb_ready_reg = 0;
+	
+//	_asm("cpl 20480");
+//	_asm("cpl 20480");
 }
 
 void usb_send_nack(void)
@@ -254,14 +257,14 @@ void usb_send_nack(void)
 	GPIOC->DDR = 0x3F;
 }
 
-void usb_send_ack(void)
+@inline void usb_send_ack(void)
 {
 	uint8_t data[2];
 
 	GPIOC->ODR = 0x40;
-	GPIOC->DDR = 0xFF;
 	GPIOC->CR1 = 0xFF;
 	GPIOC->CR2 = 0xFF;
+	GPIOC->DDR = 0xFF;
 	
 	data[0] = 0x80;
 	data[1] = USB_PID_ACK;
@@ -444,12 +447,12 @@ void usb_send_data(uint8_t * buffer, uint8_t lenght, uint8_t mode)
 		
 	while (lenght > 0)
 	{
+		usb.tx_buffer[0] = 0x80;
+		usb.tx_buffer[1] = data_sync;
+		
 		if (lenght >= 8)
 		{
 			usb.tx_lenght = 12;
-
-			usb.tx_buffer[0] = 0x80;
-			usb.tx_buffer[1] = data_sync;
 
 			for (index = 2; index < 10; index++)
 				usb.tx_buffer[index] = *buffer++;
@@ -460,30 +463,29 @@ void usb_send_data(uint8_t * buffer, uint8_t lenght, uint8_t mode)
 		{
 			usb.tx_lenght = (uint8_t) (4 + lenght);
 
-			usb.tx_buffer[0] = 0x80;
-			usb.tx_buffer[1] = data_sync;
-
 			for (index = 2; index < 2 + lenght; index++)
 				usb.tx_buffer[index] = *buffer++;
 
 			lenght = 0;
 		}
 
-		// расчитываем контрольную сумму пакета
+		// calculate CRC
 		usb_calc_crc16(&usb.tx_buffer[2], (uint8_t) (usb.tx_lenght - 4));
 
-		// обновляем пакет синхронизации
+		// toggle data0 data1
 		if (data_sync == USB_PID_DATA1)
 			data_sync = USB_PID_DATA0;
 		else
 			data_sync = USB_PID_DATA1;
 
-		// сообщаем о готовности данных
+		// data is available to send out 
 		usb.event = USB_EVENT_READY_DATA_IN;
 		
+		// wait for transmission and then start the next
 		while (usb.event == USB_EVENT_READY_DATA_IN)
 		{
-			if ((usb.state != USB_STATE_IN)&&(usb.state != USB_STATE_SETUP))
+			//if ((usb.state != USB_STATE_IN)&&(usb.state != USB_STATE_SETUP))
+			if (usb.event == USB_EVENT_WAIT_DATA_IN)
 				break;
 		}
 	}
